@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selling Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&display=swap">
+<style>
+  :root{
+    /* palette — "Rigour and precision, the direct reading" — analogous scheme */
+    --cor-1:#E0F8FF;  /* pale lagoon */
+    --cor-2:#0F1532;  /* deep amethyst */
+    --cor-3:#378C5E;  /* mint */
+    --cor-4:#BBB2FF;  /* lavender */
+    --fundo:#E0F8FF;
+    --tinta:#0F1532;
+    --fonte-1:"Jost", system-ui, sans-serif;
+    --fonte-2:"IBM Plex Serif", Georgia, serif;
+    --fonte-3:"IBM Plex Mono", ui-monospace, monospace;
+
+    /* derived tokens — ratios measured with scripts/contraste.py, not estimated */
+    --bg: var(--fundo);
+    --paper: color-mix(in srgb, var(--cor-1) 96%, var(--cor-2) 4%);
+    --paper-flat: var(--cor-1);
+    --ink: var(--tinta);
+    --ink-soft: color-mix(in srgb, var(--tinta) 65%, var(--cor-1) 35%); /* measured 5.41:1 on --fundo, AA pass */
+    --line: color-mix(in srgb, var(--tinta) 13%, var(--cor-1) 87%);
+    --teal: var(--cor-3);                 /* mint — icons, active states, decorative bars only (measured 4.32:1, below AA for small text) */
+    --teal-bg: color-mix(in srgb, var(--cor-3) 16%, var(--cor-1) 84%);
+    --teal-soft: color-mix(in srgb, var(--cor-3) 45%, var(--cor-1) 55%);
+    --lavender-bg: color-mix(in srgb, var(--cor-4) 22%, var(--cor-1) 78%);
+    --red-bg: color-mix(in srgb, var(--tinta) 9%, var(--cor-1) 91%);
+    --gray-bg: color-mix(in srgb, var(--tinta) 6%, var(--cor-1) 94%);
+    --shadow-hover: 0 16px 32px -18px rgba(15,21,50,.28);
+    --radius:22px;
+    --radius-sm:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--fonte-2);
+    line-height:1.55;
+    min-height:100svh;
+  }
+  main{max-width:820px;margin:0 auto;padding:clamp(20px,4vw,32px) 20px 120px;}
+  .page{display:none;}
+  .page.active{display:block;}
+  h1{font-family:var(--fonte-1);font-size:clamp(28px,4vw + 12px,38px);font-weight:600;letter-spacing:-0.01em;margin:0 0 6px;}
+  h2{font-family:var(--fonte-1);font-size:19px;font-weight:600;margin:0 0 4px;}
+  p.lead{color:var(--ink-soft);margin:0 0 24px;font-size:15px;max-width:56ch;}
+  .mono{font-family:var(--fonte-3);font-variant-numeric:tabular-nums;}
+  .grid-nav{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:560px){.grid-nav{grid-template-columns:1fr;}}
+  .nav-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;text-align:left;cursor:pointer;font-family:inherit;
+    display:flex;flex-direction:column;gap:14px;position:relative;
+    transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  }
+  .nav-card:hover{border-color:var(--teal);box-shadow:var(--shadow-hover);transform:translateY(-2px);}
+  .nav-card:focus-visible{outline:2px solid var(--teal);outline-offset:2px;}
+  .nav-card .row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .nav-icon{
+    width:40px;height:40px;border-radius:12px;background:var(--paper-flat);
+    border:1px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .nav-icon svg{width:20px;height:20px;stroke:var(--ink);}
+  .nav-icon.accent-teal{background:var(--cor-3);border-color:var(--cor-3);}
+  .nav-icon.accent-teal svg{stroke:var(--tinta);}
+  .nav-icon.accent-amber{background:var(--cor-4);border-color:var(--cor-4);}
+  .nav-icon.accent-amber svg{stroke:var(--tinta);}
+  .nav-card .count{
+    font-family:var(--fonte-3);background:var(--teal-bg);color:var(--ink);
+    font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;
+  }
+  .nav-card .title{font-family:var(--fonte-1);font-size:16px;font-weight:600;color:var(--ink);}
+  .nav-card .desc{font-size:13px;color:var(--ink-soft);}
+  .backlink{background:none;border:none;color:var(--teal);font-weight:600;font-size:14px;
+    cursor:pointer;padding:0;margin-bottom:16px;font-family:var(--fonte-1);}
+  fieldset{border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;margin:0 0 16px;background:var(--paper);}
+  legend{font-size:13px;color:var(--ink-soft);padding:0 6px;font-weight:500;font-family:var(--fonte-2);}
+  label{display:block;font-size:13px;font-weight:600;margin:12px 0 4px;font-family:var(--fonte-1);}
+  label:first-child{margin-top:0;}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;
+    font-family:var(--fonte-2);font-size:14px;background:var(--paper-flat);color:var(--ink);
+  }
+  textarea{resize:vertical;min-height:80px;}
+  .checks{display:flex;flex-wrap:wrap;gap:10px;}
+  .checks label{display:flex;align-items:center;gap:6px;font-weight:400;margin:0;font-size:13px;}
+  .checks input{width:auto;}
+  .row{display:flex;gap:12px;}
+  .row > div{flex:1;}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
+  button.btn{
+    border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:600;
+    cursor:pointer;font-family:var(--fonte-2);transition:transform .1s ease, opacity .15s ease;
+  }
+  button.btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--tinta);color:var(--cor-1);}
+  .btn-primary:hover{opacity:.9;}
+  .btn-secondary{background:var(--gray-bg);color:var(--ink);}
+  .btn-danger{background:var(--red-bg);color:var(--ink);}
+  .btn-ghost{background:none;border:1px solid var(--line);color:var(--ink);}
+  .btn-small{padding:6px 10px;font-size:12px;}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+  .thumbs{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .thumbs img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line);}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;}
+  .card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+  .card .name{font-size:15px;font-weight:600;}
+  .card .meta{font-size:13px;color:var(--ink-soft);margin-top:2px;font-family:var(--fonte-3);}
+  .badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap;}
+  .badge-amber{background:var(--cor-4);color:var(--tinta);}
+  .badge-teal{background:var(--tinta);color:var(--cor-1);}
+  .badge-red{background:var(--red-bg);color:var(--ink);border:1px solid var(--line);}
+  .badge-gray{background:var(--gray-bg);color:var(--ink);}
+  .empty{color:var(--ink-soft);font-size:14px;padding:20px 0;text-align:center;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);}
+  th{color:var(--ink-soft);font-weight:600;font-size:12px;}
+  td.mono, .card .meta.mono{font-family:var(--fonte-3);}
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+  @media (max-width:560px){.stat-grid{grid-template-columns:1fr 1fr;}}
+  .stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);padding:16px;}
+  .stat .num{font-family:var(--fonte-3);font-size:26px;font-weight:600;}
+  .stat .lbl{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;}
+  .bar-row .lbl{width:110px;flex-shrink:0;color:var(--ink-soft);}
+  .bar-row .num{font-family:var(--fonte-3);}
+  .bar-track{flex:1;background:var(--gray-bg);border-radius:6px;height:10px;overflow:hidden;}
+  .bar-fill{background:var(--teal);height:100%;}
+  .reply-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;}
+  .reply-card .tag{font-size:12px;color:var(--ink-soft);margin-bottom:6px;font-weight:600;}
+  .reply-card .txt{font-size:14px;}
+  textarea.copyout{background:var(--gray-bg);font-family:var(--fonte-2);}
+  select.action-select{font-size:12px;padding:4px 6px;}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+  input[type=file]{font-size:13px;}
+  a.filelink{color:var(--teal);}
+
+  /* bottom tab bar */
+  nav.tabbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:20;
+    display:flex;justify-content:center;gap:10px;
+    padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    background:color-mix(in srgb, var(--cor-1) 88%, transparent);
+    backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+  }
+  nav.tabbar button{
+    width:52px;height:52px;border-radius:16px;border:1px solid var(--line);
+    background:var(--paper-flat);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  nav.tabbar button svg{width:22px;height:22px;stroke:var(--ink);}
+  nav.tabbar button.active{
+    background:linear-gradient(135deg, var(--teal), var(--teal-soft));
+    border-color:transparent;box-shadow:var(--shadow-hover);
+  }
+  nav.tabbar button.active svg{stroke:var(--tinta);}
+</style>
+</head>
+<body>
+
+<main>
+
+  <!-- HOME -->
+  <section class="page" id="page-home">
+    <h1>Selling Tool</h1>
+    <p class="lead">Ferramenta pessoal pra listar, acompanhar e fechar vendas. Escolha uma etapa abaixo.</p>
+    <div class="grid-nav">
+      <button class="nav-card" onclick="goto_('listar')">
+        <div class="row-top">
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+          <span class="count mono" id="cnt-rascunho">0</span>
+        </div>
+        <span class="title">Listar um item</span>
+        <span class="desc">Preencher dados, fotos, preço e gerar a copy do anúncio.</span>
+      </button>
+      <button class="nav-card" onclick="goto_('aprovacao')">
+        <div class="row-top">
+          <div class="nav-icon accent-amber"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7L10 17l-5-5"/></svg></div>
+          <span class="count mono" id="cnt-aprovacao">0</span>
+        </div>
+        <span class="title">Aprovação de items</span>
+        <span class="desc">Revisar o que está pronto antes de publicar.</span>
+      </button>
+      <button class="nav-card" onclick="goto_('avenda')">
+        <div class="row-top">
+          <div class="nav-icon accent-teal"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l1.5-4h13L20 8M4 8h16M4 8v11a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V8M9 12a3 3 0 0 0 6 0"/></svg></div>
+          <span class="count mono" id="cnt-avenda">0</span>
+        </div>
+        <span class="title">Items à venda</span>
+        <span class="desc">Tudo publicado, com status e ação necessária.</span>
+      </button>
+      <button class="nav-card" onclick="goto_('vendidos')">
+        <div class="row-top">
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.8-5"/></svg></div>
+          <span class="count mono" id="cnt-vendidos">0</span>
+        </div>
+        <span class="title">Items vendidos</span>
+        <span class="desc">Histórico de vendas fechadas.</span>
+      </button>
+      <button class="nav-card" onclick="goto_('naovender')">
+        <div class="row-top">
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+          <span class="count mono" id="cnt-naovender">0</span>
+        </div>
+        <span class="title">Items que não venderemos mais</span>
+        <span class="desc">Retirados de circulação, com o motivo.</span>
+      </button>
+      <button class="nav-card" onclick="goto_('dashboard')">
+        <div class="row-top">
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V10M12 19V5M19 19v-7"/></svg></div>
+          <span class="count mono" id="cnt-total">0</span>
+        </div>
+        <span class="title">Todos os items</span>
+        <span class="desc">Resumo geral — dashboard com os números principais.</span>
+      </button>
+      <button class="nav-card" onclick="goto_('biblioteca')">
+        <div class="row-top">
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H8l-4 4V5z"/></svg></div>
+        </div>
+        <span class="title">Biblioteca de respostas</span>
+        <span class="desc">Respostas prontas pro Trade Me e Marketplace, em inglês neozelandês.</span>
+      </button>
+      <button class="nav-card" onclick="goto_('ferramentas')">
+        <div class="row-top">
+          <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17l1 1 5.3-5.3a4 4 0 0 1 5.4-5.4l-2 2 1.7 1.7 2-2z"/></svg></div>
+        </div>
+        <span class="title">Ferramentas &amp; automação</span>
+        <span class="desc">Exportar/importar dados, sync com planilhas, próximos passos.</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- LISTAR ITEM -->
+  <section class="page" id="page-listar">
+    <button class="backlink" onclick="goto_('home')">&larr; Home</button>
+    <h1>Listar um item</h1>
+    <p class="lead">Preencha os dados abaixo. No fim, gere a copy do anúncio (sai em inglês neozelandês, pronta pra publicar).</p>
+
+    <form id="form-item" onsubmit="return false;">
+      <input type="hidden" id="f-id">
+
+      <fieldset>
+        <legend>Importar de um site (opcional)</legend>
+        <label>Link do anúncio ou da página do produto</label>
+        <input type="text" id="f-import-url" placeholder="https://...">
+        <div class="actions" style="margin-top:8px;">
+          <button class="btn btn-secondary btn-small" type="button" onclick="importarDeURL()">Tentar buscar automaticamente</button>
+        </div>
+        <p class="hint" id="import-status">Vários sites bloqueiam esse tipo de busca automática — se não funcionar, use o campo abaixo.</p>
+
+        <label style="margin-top:14px;">Ou cole aqui o texto do anúncio (caminho mais confiável)</label>
+        <textarea id="f-import-texto" placeholder="Cole o texto copiado do site aqui..."></textarea>
+
+        <label>Link de uma imagem (opcional)</label>
+        <div class="row">
+          <input type="text" id="f-import-imagem-url" placeholder="https://.../foto.jpg" style="flex:1;">
+          <button class="btn btn-secondary btn-small" type="button" style="flex:0;white-space:nowrap;" onclick="adicionarImagemPorLink()">Adicionar imagem</button>
+        </div>
+
+        <div class="actions" style="margin-top:12px;">
+          <button class="btn btn-primary btn-small" type="button" onclick="sugerirPreenchimento()">Sugerir preenchimento a partir do texto acima</button>
+        </div>
+        <p class="hint">A sugestão preenche nome, preço, condição e descrição — sempre revise antes de gerar a copy final.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>O item</legend>
+        <label>Nome do item</label>
+        <input type="text" id="f-nome" placeholder="Ex: Bicicleta Trek 2019, ou 2015 Toyota Corolla GX">
+
+        <div class="row">
+          <div>
+            <label>Categoria</label>
+            <select id="f-categoria" onchange="toggleCarFields()">
+              <option value="geral">Item pessoal (geral)</option>
+              <option value="carro">Carro</option>
+            </select>
+          </div>
+          <div>
+            <label>Condição</label>
+            <select id="f-condicao">
+              <option>Novo</option>
+              <option>Bom usado</option>
+              <option>Usado</option>
+              <option>Com defeito</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Motivo da venda</label>
+        <input type="text" id="f-motivo" placeholder="Ex: mudança, upgrade, não uso mais">
+
+        <label>Descrição / observações honestas</label>
+        <textarea id="f-descricao" placeholder="Estado real, o que inclui, qualquer defeito visível..."></textarea>
+      </fieldset>
+
+      <fieldset id="fieldset-carro" style="display:none;">
+        <legend>Dados do carro</legend>
+        <div class="row">
+          <div><label>Odômetro (km)</label><input type="number" id="f-odometro"></div>
+          <div><label>Transmissão</label><select id="f-transmissao"><option>Automática</option><option>Manual</option></select></div>
+        </div>
+        <div class="row">
+          <div><label>WOF válido até</label><input type="date" id="f-wof"></div>
+          <div><label>Registo válido até</label><input type="date" id="f-rego"></div>
+        </div>
+        <label>Combustível</label>
+        <select id="f-combustivel"><option>Gasolina</option><option>Diesel</option><option>Híbrido</option><option>Elétrico</option></select>
+      </fieldset>
+
+      <fieldset>
+        <legend>Preço e prazo</legend>
+        <div class="row">
+          <div><label>Preço ideal (NZ$)</label><input type="number" id="f-preco-ideal"></div>
+          <div><label>Preço mínimo / floor (NZ$)</label><input type="number" id="f-preco-min"></div>
+        </div>
+        <label>Prazo / urgência (data limite, se houver)</label>
+        <input type="date" id="f-prazo">
+      </fieldset>
+
+      <fieldset>
+        <legend>Local e retirada</legend>
+        <label>Local</label>
+        <input type="text" id="f-local" value="Ostend, Waiheke Island">
+        <label>Retirada / entrega</label>
+        <select id="f-retirada">
+          <option value="pickup">Só retirada (pickup)</option>
+          <option value="entrega">Posso entregar / encontrar na balsa</option>
+          <option value="ambos">Ambos</option>
+        </select>
+      </fieldset>
+
+      <fieldset>
+        <legend>Canais de publicação</legend>
+        <div class="checks">
+          <label><input type="checkbox" value="Trade Me" class="f-canal"> Trade Me</label>
+          <label><input type="checkbox" value="Facebook Marketplace" class="f-canal"> Facebook Marketplace</label>
+          <label><input type="checkbox" value="Grupos Waiheke" class="f-canal"> Grupos Waiheke</label>
+          <label><input type="checkbox" value="Grupos Auckland" class="f-canal"> Grupos Auckland</label>
+          <label><input type="checkbox" value="WhatsApp" class="f-canal"> WhatsApp</label>
+          <label><input type="checkbox" value="Instagram" class="f-canal"> Instagram</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Fotos</legend>
+        <input type="file" id="f-imagens" accept="image/*" multiple onchange="handleImages(event)">
+        <p class="hint">As imagens ficam salvas no navegador (redimensionadas). Pra não pesar demais, use até 4-5 fotos por item.</p>
+        <div class="thumbs" id="thumbs-preview"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Copy do anúncio (gerada automaticamente, em inglês neozelandês)</legend>
+        <button class="btn btn-secondary btn-small" type="button" onclick="gerarCopy()">Gerar copy</button>
+        <label style="margin-top:12px;">Título</label>
+        <textarea id="f-copy-titulo" class="copyout" style="min-height:40px;"></textarea>
+        <label>Descrição</label>
+        <textarea id="f-copy-descricao" class="copyout" style="min-height:140px;"></textarea>
+      </fieldset>
+
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="salvarItem('rascunho')">Salvar rascunho</button>
+        <button class="btn btn-primary" onclick="salvarItem('aguardando_aprovacao')">Enviar para aprovação</button>
+        <button class="btn btn-ghost" onclick="limparForm()">Limpar formulário</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- APROVACAO -->
+  <section class="page" id="page-aprovacao">
+    <button class="backlink" onclick="goto_('home')">&larr; Home</button>
+    <h1>Aprovação de items</h1>
+    <p class="lead">Revise antes de publicar. Aprovar move pra "Items à venda"; reprovar move pra "Não venderemos mais".</p>
+    <div id="list-aprovacao"></div>
+  </section>
+
+  <!-- A VENDA -->
+  <section class="page" id="page-avenda">
+    <button class="backlink" onclick="goto_('home')">&larr; Home</button>
+    <h1>Items à venda</h1>
+    <p class="lead">Tudo que está publicado agora. Atualize a ação necessária conforme for respondendo mensagens.</p>
+    <div id="list-avenda"></div>
+  </section>
+
+  <!-- VENDIDOS -->
+  <section class="page" id="page-vendidos">
+    <button class="backlink" onclick="goto_('home')">&larr; Home</button>
+    <h1>Items vendidos</h1>
+    <div id="list-vendidos"></div>
+  </section>
+
+  <!-- NAO VENDER -->
+  <section class="page" id="page-naovender">
+    <button class="backlink" onclick="goto_('home')">&larr; Home</button>
+    <h1>Items que não venderemos mais</h1>
+    <div id="list-naovender"></div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section class="page" id="page-dashboard">
+    <button class="backlink" onclick="goto_('home')">&larr; Home</button>
+    <h1>Todos os items</h1>
+    <p class="lead">Resumo geral de tudo que está rodando.</p>
+    <div class="stat-grid" id="stat-grid"></div>
+    <h2>Por canal</h2>
+    <div id="bars-canal"></div>
+  </section>
+
+  <!-- BIBLIOTECA -->
+  <section class="page" id="page-biblioteca">
+    <button class="backlink" onclick="goto_('home')">&larr; Home</button>
+    <h1>Biblioteca de respostas</h1>
+    <p class="lead">Ready-made replies for Trade Me and Facebook Marketplace, in NZ English.</p>
+    <div id="list-biblioteca"></div>
+  </section>
+
+  <!-- FERRAMENTAS -->
+  <section class="page" id="page-ferramentas">
+    <button class="backlink" onclick="goto_('home')">&larr; Home</button>
+    <h1>Ferramentas &amp; automação</h1>
+    <p class="lead">O que já roda dentro da ferramenta, e o que ainda depende de você (ou de mim, num próximo passo).</p>
+
+    <fieldset>
+      <legend>Já incluído</legend>
+      <p style="font-size:14px;">Gerador de copy (na tela "Listar um item") · Biblioteca de respostas · Contagem automática de dias no ar e dias até vender · Dashboard com totais e valores.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Backup e planilha (Google Sheets)</legend>
+      <p style="font-size:14px;">Os dados ficam salvos neste navegador. Pra ter backup ou levar pra uma planilha do Google, exporte em CSV e importe no Sheets (Arquivo → Importar).</p>
+      <div class="actions">
+        <button class="btn btn-primary btn-small" onclick="exportarCSV()">Exportar CSV</button>
+        <label class="btn btn-secondary btn-small" style="cursor:pointer;">
+          Importar CSV
+          <input type="file" accept=".csv" style="display:none;" onchange="importarCSV(event)">
+        </label>
+      </div>
+      <p class="hint">Sync automático e ao vivo com o Google Sheets exigiria login do Google dentro da ferramenta — isso eu não faço por segurança (nunca digito credenciais/tokens). Se quiser esse próximo nível, posso escrever um Google Apps Script pra você colar direto na sua conta Google, que aí sim sincroniza sozinho.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Publicar (GitHub + Netlify)</legend>
+      <p style="font-size:14px;">Este arquivo é único (HTML/CSS/JS), sem build — suba num repositório do GitHub e conecte no Netlify (deploy automático a cada commit). Como tudo roda no navegador, funciona igual localmente e publicado.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Agentes de automação (próximos passos possíveis)</legend>
+      <p style="font-size:14px;">Não existe hoje uma forma oficial de postar direto no Trade Me/Facebook/WhatsApp a partir daqui (sem violar os termos de uso deles). O caminho realista: usar o Claude in Chrome pra ler mensagens e colar as respostas da biblioteca, e usar esta tela só como o "cérebro" central que guarda tudo organizado.</p>
+    </fieldset>
+  </section>
+
+</main>
+
+<nav class="tabbar">
+  <button id="tab-home" onclick="goto_('home')" aria-label="Home">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5L12 4l8 7.5M6 10v9h12v-9"/></svg>
+  </button>
+  <button id="tab-listar" onclick="goto_('listar')" aria-label="Listar um item">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+  <button id="tab-dashboard" onclick="goto_('dashboard')" aria-label="Dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V10M12 19V5M19 19v-7"/></svg>
+  </button>
+  <button id="tab-ferramentas" onclick="goto_('ferramentas')" aria-label="Ferramentas">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17l1 1 5.3-5.3a4 4 0 0 1 5.4-5.4l-2 2 1.7 1.7 2-2z"/></svg>
+  </button>
+</nav>
+
+<script>
+/* ---------- estado e persistência ---------- */
+const STORAGE_KEY = 'vv_items_v1';
+let items = [];
+let currentImages = [];
+
+function loadItems(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    items = raw ? JSON.parse(raw) : [];
+  }catch(e){ items = []; }
+}
+function saveItems(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  renderAll();
+}
+function uid(){
+  return 'it_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+}
+
+/* ---------- navegação ---------- */
+function goto_(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('nav.tabbar button').forEach(b=>b.classList.remove('active'));
+  const tabId = 'tab-' + (['home','listar','dashboard','ferramentas'].includes(name) ? name : 'home');
+  const tabBtn = document.getElementById(tabId);
+  if(tabBtn) tabBtn.classList.add('active');
+  if(name==='listar' && !document.getElementById('f-id').value){
+    limparForm();
+  }
+  window.scrollTo(0,0);
+}
+
+/* ---------- formulário de item ---------- */
+function toggleCarFields(){
+  const isCar = document.getElementById('f-categoria').value === 'carro';
+  document.getElementById('fieldset-carro').style.display = isCar ? 'block' : 'none';
+}
+function limparForm(){
+  document.getElementById('form-item').reset();
+  document.getElementById('f-id').value = '';
+  document.getElementById('f-local').value = 'Ostend, Waiheke Island';
+  document.getElementById('f-import-url').value = '';
+  document.getElementById('f-import-texto').value = '';
+  document.getElementById('f-import-imagem-url').value = '';
+  document.getElementById('import-status').textContent = 'Vários sites bloqueiam esse tipo de busca automática — se não funcionar, use o campo abaixo.';
+  currentImages = [];
+  document.getElementById('thumbs-preview').innerHTML = '';
+  toggleCarFields();
+}
+function handleImages(event){
+  const files = Array.from(event.target.files).slice(0,5);
+  currentImages = [];
+  const preview = document.getElementById('thumbs-preview');
+  preview.innerHTML = '';
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        const maxW = 480;
+        const scale = Math.min(1, maxW/img.width);
+        canvas.width = img.width*scale;
+        canvas.height = img.height*scale;
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg',0.75);
+        currentImages.push(dataUrl);
+        const thumb = document.createElement('img');
+        thumb.src = dataUrl;
+        preview.appendChild(thumb);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function stripHtml(html){
+  let cleaned = html.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'');
+  cleaned = cleaned.replace(/<[^>]+>/g,' ');
+  cleaned = cleaned.replace(/&nbsp;/g,' ').replace(/&amp;/g,'&');
+  cleaned = cleaned.replace(/\s+/g,' ').trim();
+  return cleaned;
+}
+
+async function importarDeURL(){
+  const url = document.getElementById('f-import-url').value.trim();
+  const status = document.getElementById('import-status');
+  if(!url){ status.textContent = 'Cole um link primeiro.'; return; }
+  status.textContent = 'Buscando...';
+  try{
+    const res = await fetch(url, {mode:'cors'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const html = await res.text();
+    const texto = stripHtml(html);
+    document.getElementById('f-import-texto').value = texto.slice(0,4000);
+    status.textContent = 'Importado! Revise o texto abaixo e clique em "Sugerir preenchimento".';
+  }catch(err){
+    status.textContent = 'Não consegui buscar automaticamente (o site provavelmente bloqueia isso, é comum no Trade Me e Facebook). Cole o texto manualmente no campo abaixo.';
+  }
+}
+
+function sugerirPreenchimento(){
+  const texto = document.getElementById('f-import-texto').value;
+  if(!texto){ alert('Não há texto pra analisar ainda — cole ou importe algo primeiro.'); return; }
+
+  const tituloGuess = texto.split(/[.\n]/)[0].trim().slice(0,80);
+  if(tituloGuess && !document.getElementById('f-nome').value){
+    document.getElementById('f-nome').value = tituloGuess;
+  }
+
+  const priceMatch = texto.match(/\$\s?([0-9]{1,3}(?:[,.][0-9]{3})*)/);
+  if(priceMatch){
+    document.getElementById('f-preco-ideal').value = priceMatch[1].replace(/[,.]/g,'');
+  }
+
+  const lower = texto.toLowerCase();
+  const condSel = document.getElementById('f-condicao');
+  if(lower.includes('brand new')||lower.includes('novo em folha')||lower.includes('unused')) condSel.value='Novo';
+  else if(lower.includes('excellent condition')||lower.includes('bom estado')||lower.includes('like new')) condSel.value='Bom usado';
+  else if(lower.includes('faulty')||lower.includes('defeito')||lower.includes('not working')) condSel.value='Com defeito';
+
+  if(document.getElementById('f-categoria').value==='carro'){
+    const kmMatch = texto.match(/([0-9]{2,3}[,.]?[0-9]{3})\s?km/i);
+    if(kmMatch) document.getElementById('f-odometro').value = kmMatch[1].replace(/[,.]/g,'');
+  }
+
+  document.getElementById('f-descricao').value = texto.slice(0,600);
+  alert('Sugestão aplicada. Revise os campos antes de gerar a copy final.');
+}
+
+function adicionarImagemPorLink(){
+  const url = document.getElementById('f-import-imagem-url').value.trim();
+  if(!url) return;
+  currentImages.push(url);
+  const preview = document.getElementById('thumbs-preview');
+  const img = document.createElement('img');
+  img.src = url;
+  preview.appendChild(img);
+  document.getElementById('f-import-imagem-url').value='';
+}
+
+function gerarCopy(){
+  const categoria = document.getElementById('f-categoria').value;
+  const nome = document.getElementById('f-nome').value || '[item]';
+  const condicao = document.getElementById('f-condicao').value;
+  const motivo = document.getElementById('f-motivo').value || 'moving on';
+  const descricao = document.getElementById('f-descricao').value || '';
+  const precoIdeal = document.getElementById('f-preco-ideal').value || '[price]';
+  const local = document.getElementById('f-local').value || 'Ostend, Waiheke Island';
+  const retirada = document.getElementById('f-retirada').value;
+  let retiradaTxt = 'Pickup only';
+  if(retirada==='entrega') retiradaTxt = 'Happy to meet the Matiatia ferry or arrange delivery';
+  if(retirada==='ambos') retiradaTxt = 'Pickup, or happy to meet the ferry / deliver if needed';
+
+  let titulo, corpo;
+
+  if(categoria==='carro'){
+    const odo = document.getElementById('f-odometro').value || '[km]';
+    const trans = document.getElementById('f-transmissao').value;
+    const wof = document.getElementById('f-wof').value || '[date]';
+    const rego = document.getElementById('f-rego').value || '[date]';
+    const combustivel = document.getElementById('f-combustivel').value;
+    titulo = nome + ' — $' + precoIdeal;
+    corpo =
+`Odometer: ${odo}km
+WOF: valid until ${wof}
+Registration: valid until ${rego}
+Fuel: ${combustivel} | Transmission: ${trans}
+Condition: ${condicao}
+${descricao}
+Reason for selling: ${motivo}
+
+Location: ${local} — viewing by appointment
+Getting it home: buyer brings it across on the Sealink vehicle ferry after purchase
+Payment: bank transfer confirmed before handover of keys`;
+  } else {
+    titulo = nome + ' — ' + condicao + ' — $' + precoIdeal;
+    corpo =
+`What it is: ${nome}
+Condition: ${condicao}. ${descricao}
+Reason for selling: ${motivo}
+
+Location: ${local} — ${retiradaTxt}
+Payment: cash or bank transfer on collection
+
+Message to arrange.`;
+  }
+  document.getElementById('f-copy-titulo').value = titulo;
+  document.getElementById('f-copy-descricao').value = corpo;
+}
+
+function salvarItem(status){
+  const id = document.getElementById('f-id').value || uid();
+  const canais = Array.from(document.querySelectorAll('.f-canal:checked')).map(c=>c.value);
+  const categoria = document.getElementById('f-categoria').value;
+
+  if(!document.getElementById('f-copy-titulo').value){ gerarCopy(); }
+
+  const existing = items.find(i=>i.id===id);
+  const item = {
+    id,
+    nome: document.getElementById('f-nome').value,
+    categoria,
+    condicao: document.getElementById('f-condicao').value,
+    motivo: document.getElementById('f-motivo').value,
+    descricao: document.getElementById('f-descricao').value,
+    precoIdeal: Number(document.getElementById('f-preco-ideal').value)||0,
+    precoMin: Number(document.getElementById('f-preco-min').value)||0,
+    prazo: document.getElementById('f-prazo').value,
+    local: document.getElementById('f-local').value,
+    retirada: document.getElementById('f-retirada').value,
+    canais,
+    imagens: currentImages.length ? currentImages : (existing ? existing.imagens : []),
+    copyTitulo: document.getElementById('f-copy-titulo').value,
+    copyDescricao: document.getElementById('f-copy-descricao').value,
+    carro: categoria==='carro' ? {
+      odometro: document.getElementById('f-odometro').value,
+      transmissao: document.getElementById('f-transmissao').value,
+      wof: document.getElementById('f-wof').value,
+      rego: document.getElementById('f-rego').value,
+      combustivel: document.getElementById('f-combustivel').value
+    } : null,
+    status,
+    acaoNecessaria: existing && existing.acaoNecessaria ? existing.acaoNecessaria : 'Publicar nos canais selecionados',
+    criadoEm: existing ? existing.criadoEm : Date.now(),
+    vendido: existing ? existing.vendido : null,
+    naoVenderMotivo: existing ? existing.naoVenderMotivo : ''
+  };
+
+  const idx = items.findIndex(i=>i.id===id);
+  if(idx>=0) items[idx]=item; else items.push(item);
+  saveItems();
+  goto_('home');
+}
+
+function editarItem(id){
+  const item = items.find(i=>i.id===id);
+  if(!item) return;
+  document.getElementById('f-id').value = item.id;
+  document.getElementById('f-nome').value = item.nome;
+  document.getElementById('f-categoria').value = item.categoria;
+  toggleCarFields();
+  document.getElementById('f-condicao').value = item.condicao;
+  document.getElementById('f-motivo').value = item.motivo;
+  document.getElementById('f-descricao').value = item.descricao;
+  document.getElementById('f-preco-ideal').value = item.precoIdeal;
+  document.getElementById('f-preco-min').value = item.precoMin;
+  document.getElementById('f-prazo').value = item.prazo;
+  document.getElementById('f-local').value = item.local;
+  document.getElementById('f-retirada').value = item.retirada;
+  document.querySelectorAll('.f-canal').forEach(c=>{ c.checked = item.canais.includes(c.value); });
+  currentImages = item.imagens||[];
+  const preview = document.getElementById('thumbs-preview');
+  preview.innerHTML='';
+  currentImages.forEach(src=>{ const im=document.createElement('img'); im.src=src; preview.appendChild(im); });
+  if(item.carro){
+    document.getElementById('f-odometro').value = item.carro.odometro;
+    document.getElementById('f-transmissao').value = item.carro.transmissao;
+    document.getElementById('f-wof').value = item.carro.wof;
+    document.getElementById('f-rego').value = item.carro.rego;
+    document.getElementById('f-combustivel').value = item.carro.combustivel;
+  }
+  document.getElementById('f-copy-titulo').value = item.copyTitulo||'';
+  document.getElementById('f-copy-descricao').value = item.copyDescricao||'';
+  goto_('listar');
+}
+
+/* ---------- ações de status ---------- */
+function aprovar(id){
+  const item = items.find(i=>i.id===id);
+  if(!item) return;
+  item.status='a_venda';
+  item.publicadoEm = Date.now();
+  saveItems();
+}
+function reprovar(id){
+  const motivo = prompt('Motivo de não vender este item:','');
+  if(motivo===null) return;
+  const item = items.find(i=>i.id===id);
+  item.status='nao_vender';
+  item.naoVenderMotivo = motivo;
+  saveItems();
+}
+function marcarVendido(id){
+  const precoStr = prompt('Preço de venda (NZ$):', items.find(i=>i.id===id).precoIdeal);
+  if(precoStr===null) return;
+  const canal = prompt('Vendido em qual canal?','Trade Me');
+  const item = items.find(i=>i.id===id);
+  item.status='vendido';
+  item.vendido = { preco:Number(precoStr)||0, data:Date.now(), canal:canal||'' };
+  saveItems();
+}
+function naoVenderMais(id){
+  const motivo = prompt('Motivo de não vender mais este item:','');
+  if(motivo===null) return;
+  const item = items.find(i=>i.id===id);
+  item.status='nao_vender';
+  item.naoVenderMotivo = motivo;
+  saveItems();
+}
+function atualizarAcao(id, valor){
+  const item = items.find(i=>i.id===id);
+  item.acaoNecessaria = valor;
+  saveItems();
+}
+function excluirItem(id){
+  if(!confirm('Excluir este item permanentemente?')) return;
+  items = items.filter(i=>i.id!==id);
+  saveItems();
+}
+
+/* ---------- render ---------- */
+function diasDesde(ts){
+  if(!ts) return '-';
+  return Math.max(0, Math.floor((Date.now()-ts)/86400000));
+}
+function badgeStatus(status){
+  const map = {
+    rascunho:['Rascunho','badge-gray'],
+    aguardando_aprovacao:['Aguardando aprovação','badge-amber'],
+    a_venda:['À venda','badge-teal'],
+    vendido:['Vendido','badge-teal'],
+    nao_vender:['Não vender','badge-red']
+  };
+  const [label,cls] = map[status]||['','badge-gray'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function renderAprovacao(){
+  const list = items.filter(i=>i.status==='aguardando_aprovacao');
+  const el = document.getElementById('list-aprovacao');
+  if(!list.length){ el.innerHTML = '<div class="empty">Nada esperando aprovação.</div>'; return; }
+  el.innerHTML = list.map(i=>`
+    <div class="card">
+      <div class="top">
+        <div>
+          <div class="name">${i.nome||'(sem nome)'}</div>
+          <div class="meta">$${i.precoIdeal} · ${i.canais.join(', ')||'sem canal definido'}</div>
+        </div>
+        ${badgeStatus(i.status)}
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary btn-small" onclick="aprovar('${i.id}')">Aprovar</button>
+        <button class="btn btn-danger btn-small" onclick="reprovar('${i.id}')">Reprovar</button>
+        <button class="btn btn-ghost btn-small" onclick="editarItem('${i.id}')">Editar</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderAVenda(){
+  const list = items.filter(i=>i.status==='a_venda');
+  const el = document.getElementById('list-avenda');
+  if(!list.length){ el.innerHTML = '<div class="empty">Nenhum item à venda no momento.</div>'; return; }
+  el.innerHTML = list.map(i=>`
+    <div class="card">
+      <div class="top">
+        <div>
+          <div class="name">${i.nome||'(sem nome)'}</div>
+          <div class="meta">$${i.precoIdeal} · ${i.canais.join(', ')||'-'} · ${diasDesde(i.publicadoEm||i.criadoEm)} dias no ar</div>
+        </div>
+      </div>
+      <label style="margin-top:10px;">Ação necessária</label>
+      <select class="action-select" onchange="atualizarAcao('${i.id}', this.value)">
+        ${['Publicar nos canais selecionados','Aguardando resposta','Responder mensagem','Agendar retirada','Nenhuma'].map(op=>
+          `<option ${i.acaoNecessaria===op?'selected':''}>${op}</option>`).join('')}
+      </select>
+      <div class="actions">
+        <button class="btn btn-primary btn-small" onclick="marcarVendido('${i.id}')">Marcar como vendido</button>
+        <button class="btn btn-danger btn-small" onclick="naoVenderMais('${i.id}')">Não vou mais vender</button>
+        <button class="btn btn-ghost btn-small" onclick="editarItem('${i.id}')">Editar</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderVendidos(){
+  const list = items.filter(i=>i.status==='vendido');
+  const el = document.getElementById('list-vendidos');
+  if(!list.length){ el.innerHTML = '<div class="empty">Nenhuma venda registrada ainda.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Item</th><th>Preço vendido</th><th>Canal</th><th>Data</th><th>Dias até vender</th><th></th></tr></thead><tbody>` +
+    list.map(i=>{
+      const dias = i.vendido ? Math.floor((i.vendido.data-i.criadoEm)/86400000) : '-';
+      const data = i.vendido ? new Date(i.vendido.data).toLocaleDateString('en-NZ') : '-';
+      return `<tr>
+        <td>${i.nome}</td>
+        <td>$${i.vendido?i.vendido.preco:0}</td>
+        <td>${i.vendido?i.vendido.canal:'-'}</td>
+        <td>${data}</td>
+        <td>${dias}</td>
+        <td><button class="btn btn-ghost btn-small" onclick="excluirItem('${i.id}')">Excluir</button></td>
+      </tr>`;
+    }).join('') + `</tbody></table>`;
+}
+
+function renderNaoVender(){
+  const list = items.filter(i=>i.status==='nao_vender');
+  const el = document.getElementById('list-naovender');
+  if(!list.length){ el.innerHTML = '<div class="empty">Nenhum item retirado de circulação.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Item</th><th>Motivo</th><th></th></tr></thead><tbody>` +
+    list.map(i=>`<tr>
+      <td>${i.nome}</td>
+      <td>${i.naoVenderMotivo||'-'}</td>
+      <td><button class="btn btn-ghost btn-small" onclick="editarItem('${i.id}')">Reabrir/editar</button></td>
+    </tr>`).join('') + `</tbody></table>`;
+}
+
+function renderDashboard(){
+  const total = items.length;
+  const aVenda = items.filter(i=>i.status==='a_venda');
+  const vendidos = items.filter(i=>i.status==='vendido');
+  const naoVendidos = items.filter(i=>i.status==='nao_vender');
+  const valorAVenda = aVenda.reduce((s,i)=>s+(i.precoIdeal||0),0);
+  const valorVendido = vendidos.reduce((s,i)=>s+(i.vendido?i.vendido.preco:0),0);
+  const temposVenda = vendidos.map(i=> i.vendido ? Math.floor((i.vendido.data-i.criadoEm)/86400000) : null).filter(v=>v!==null);
+  const mediaDias = temposVenda.length ? Math.round(temposVenda.reduce((a,b)=>a+b,0)/temposVenda.length) : '-';
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">Total de items</div></div>
+    <div class="stat"><div class="num">${aVenda.length}</div><div class="lbl">À venda</div></div>
+    <div class="stat"><div class="num">${vendidos.length}</div><div class="lbl">Vendidos</div></div>
+    <div class="stat"><div class="num">${naoVendidos.length}</div><div class="lbl">Não vendidos</div></div>
+    <div class="stat"><div class="num">$${valorAVenda}</div><div class="lbl">Valor total à venda</div></div>
+    <div class="stat"><div class="num">$${valorVendido}</div><div class="lbl">Valor total vendido</div></div>
+    <div class="stat"><div class="num">${mediaDias}</div><div class="lbl">Média de dias até vender</div></div>
+  `;
+
+  const canais = {};
+  items.forEach(i=> (i.canais||[]).forEach(c=> canais[c]=(canais[c]||0)+1));
+  const max = Math.max(1, ...Object.values(canais));
+  const bars = document.getElementById('bars-canal');
+  const keys = Object.keys(canais);
+  bars.innerHTML = keys.length ? keys.map(c=>`
+    <div class="bar-row">
+      <div class="lbl">${c}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(canais[c]/max*100)}%"></div></div>
+      <div>${canais[c]}</div>
+    </div>`).join('') : '<div class="empty">Ainda sem items associados a canais.</div>';
+}
+
+function renderCounts(){
+  document.getElementById('cnt-rascunho').textContent = items.filter(i=>i.status==='rascunho').length;
+  document.getElementById('cnt-aprovacao').textContent = items.filter(i=>i.status==='aguardando_aprovacao').length;
+  document.getElementById('cnt-avenda').textContent = items.filter(i=>i.status==='a_venda').length;
+  document.getElementById('cnt-vendidos').textContent = items.filter(i=>i.status==='vendido').length;
+  document.getElementById('cnt-naovender').textContent = items.filter(i=>i.status==='nao_vender').length;
+  document.getElementById('cnt-total').textContent = items.length;
+}
+
+function renderAll(){
+  renderCounts();
+  renderAprovacao();
+  renderAVenda();
+  renderVendidos();
+  renderNaoVender();
+  renderDashboard();
+}
+
+/* ---------- CSV ---------- */
+function exportarCSV(){
+  const cols = ['id','nome','categoria','condicao','motivo','precoIdeal','precoMin','prazo','local','retirada','canais','status','acaoNecessaria','vendidoPreco','vendidoData','vendidoCanal','naoVenderMotivo'];
+  const rows = items.map(i=>[
+    i.id,i.nome,i.categoria,i.condicao,i.motivo,i.precoIdeal,i.precoMin,i.prazo,i.local,i.retirada,
+    (i.canais||[]).join('|'),i.status,i.acaoNecessaria||'',
+    i.vendido?i.vendido.preco:'', i.vendido?new Date(i.vendido.data).toISOString():'', i.vendido?i.vendido.canal:'',
+    i.naoVenderMotivo||''
+  ]);
+  const csv = [cols.join(','), ...rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'vamos-vender-items.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+function importarCSV(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    const header = lines[0].split(',').map(h=>h.replace(/"/g,''));
+    for(let i=1;i<lines.length;i++){
+      const cells = lines[i].match(/(".*?"|[^,]+)(?=,|$)/g)||[];
+      const clean = cells.map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"'));
+      const row = {}; header.forEach((h,idx)=> row[h]=clean[idx]);
+      const existingIdx = items.findIndex(it=>it.id===row.id);
+      const item = {
+        id: row.id||uid(), nome:row.nome, categoria:row.categoria, condicao:row.condicao,
+        motivo:row.motivo, descricao:'', precoIdeal:Number(row.precoIdeal)||0, precoMin:Number(row.precoMin)||0,
+        prazo:row.prazo, local:row.local, retirada:row.retirada, canais:(row.canais||'').split('|').filter(Boolean),
+        imagens:[], copyTitulo:'', copyDescricao:'', carro:null, status:row.status||'rascunho',
+        acaoNecessaria:row.acaoNecessaria||'', criadoEm:Date.now(),
+        vendido: row.vendidoPreco ? {preco:Number(row.vendidoPreco), data:new Date(row.vendidoData).getTime(), canal:row.vendidoCanal} : null,
+        naoVenderMotivo: row.naoVenderMotivo||''
+      };
+      if(existingIdx>=0) items[existingIdx]=item; else items.push(item);
+    }
+    saveItems();
+    alert('Importação concluída.');
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- biblioteca de respostas ---------- */
+const REPLIES = [
+  ['Still available?', "Yep, still available! Can sort pickup from Ostend — this arvo or tomorrow morning — what time suits?"],
+  ['General condition question', "Good question — [honest detail]. Selling because [reason]. Give me a shout if you've got any other questions."],
+  ['Lowball offer', "Cheers for the interest! Price is already set against what's been selling — I could maybe do [small margin], but not much below that."],
+  ['Negotiating (no number)', "There's a bit of room to move, but not heaps — the price already reflects the condition and what similar ones have gone for. What did you have in mind?"],
+  ['Buyer goes quiet', "Hey [name], just confirming we're still good for today/tomorrow — I'll hold it till [time], then I'll need to let the next person know it's available."],
+  ['Multiple buyers', "Got a couple of others asking too, so whoever confirms first gets it — but you're welcome to lock it in now if you're keen."],
+  ['Ferry logistics', "I'm based in Ostend, Waiheke — for something this size, it's an easy walk-on with Fullers360 to Matiatia, and I can meet you there if that helps."],
+  ['Payment method', "I'd prefer bank transfer confirmed on the spot at pickup, or cash counted on handover. Does either work for you?"],
+  ['Prepay / courier push (decline)', "I'd rather not do it that way, sorry — I only hand over once payment's confirmed in person at pickup."],
+  ['More photos', "No worries, I'll get you a few more photos shortly."],
+  ['Confirming pickup', "Sweet, all sorted! I'll flick you the exact address in Ostend on WhatsApp once we've locked in a time — does [day/time] work?"],
+  ['Already sold', "Already sold, thanks for your interest! Pulling the listing down now."]
+];
+function renderBiblioteca(){
+  const el = document.getElementById('list-biblioteca');
+  el.innerHTML = REPLIES.map(([tag,txt],idx)=>`
+    <div class="reply-card">
+      <div class="tag">${tag}</div>
+      <div class="txt" id="reply-${idx}">${txt}</div>
+      <div class="actions" style="margin-top:8px;">
+        <button class="btn btn-ghost btn-small" onclick="copiarTexto('reply-${idx}')">Copiar</button>
+      </div>
+    </div>`).join('') + `
+    <div class="reply-card">
+      <div class="tag">Sign-off</div>
+      <div class="txt" id="reply-signoff">Igor — 027 363 7757 (call, text, or WhatsApp)\nOstend, Waiheke Island</div>
+      <div class="actions" style="margin-top:8px;">
+        <button class="btn btn-ghost btn-small" onclick="copiarTexto('reply-signoff')">Copiar</button>
+      </div>
+    </div>`;
+}
+function copiarTexto(id){
+  const txt = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(txt);
+}
+
+/* ---------- init ---------- */
+loadItems();
+renderAll();
+renderBiblioteca();
+toggleCarFields();
+goto_('home');
+</script>
+</body>
+</html>
