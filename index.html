@@ -532,6 +532,11 @@
     <h1>Listar um item</h1>
     <p class="lead">Preencha os dados abaixo. No fim, gere a copy do anúncio (sai em inglês neozelandês, pronta pra publicar).</p>
 
+    <div id="rascunhos-box" hidden>
+      <div class="section-head" style="margin-top:0"><h2>Rascunhos salvos</h2><span class="hint">toque pra continuar</span></div>
+      <div id="list-rascunhos"></div>
+    </div>
+
     <form id="form-item" onsubmit="return false;">
       <input type="hidden" id="f-id">
 
@@ -1278,8 +1283,8 @@ function salvarItem(status){
            : (existing.precoIdeal!==item.precoIdeal || existing.precoMin!==item.precoMin) ? { type:'preco', meta:{ de:existing.precoIdeal, para:item.precoIdeal } }
            : { type:'editado' };
   saveItems(item, ev);
-  toast(status==='rascunho' ? 'Rascunho salvo' : 'Enviado para aprovação');
-  goto_('home');
+  if(status==='rascunho'){ limparForm(); goto_('listar'); toast('Rascunho salvo. Ele fica listado no topo desta tela.'); }
+  else { toast('Enviado para aprovação'); goto_('aprovacao'); }
 }
 
 function editarItem(id){
@@ -1312,6 +1317,8 @@ function editarItem(id){
   document.getElementById('f-copy-titulo').value = item.copyTitulo||'';
   document.getElementById('f-copy-descricao').value = item.copyDescricao||'';
   goto_('listar');
+  renderRascunhos();
+  setTimeout(()=>document.getElementById('form-item').scrollIntoView({behavior:'smooth', block:'start'}), 80);
 }
 
 /* ---------- ações de status ---------- */
@@ -1375,6 +1382,30 @@ function badgeStatus(status){
   };
   const [label,cls] = map[status]||['','badge-gray'];
   return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function renderRascunhos(){
+  const list = items.filter(i=>i.status==='rascunho');
+  const box = document.getElementById('rascunhos-box'), el = document.getElementById('list-rascunhos');
+  const editing = document.getElementById('f-id').value;
+  box.hidden = !list.length;
+  el.innerHTML = list.map(i=>`
+    <div class="card"${i.id===editing ? ' style="border-color:var(--tinta)"' : ''}>
+      ${i.imagens&&i.imagens[0] ? `<div class="pic"><img src="${i.imagens[0]}" alt=""></div>` : `<div class="pic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg></div>`}
+      <div class="body">
+        <div class="top">
+          <div>
+            <div class="name">${i.nome||'(sem nome)'}</div>
+            <div class="meta">${i.id===editing ? 'editando agora · ' : ''}salvo há ${diasDesde(i.criadoEm)} dia(s)</div>
+          </div>
+          <div class="price">${i.precoIdeal ? '$'+i.precoIdeal : ''}</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary btn-small" onclick="editarItem('${i.id}')">Continuar</button>
+          <button class="btn btn-ghost btn-small" onclick="excluirItem('${i.id}')">Excluir</button>
+        </div>
+      </div>
+    </div>`).join('');
 }
 
 function renderAprovacao(){
@@ -1546,6 +1577,7 @@ function renderCounts(){
 
 function renderAll(){
   renderCounts();
+  renderRascunhos();
   renderAprovacao();
   renderAVenda();
   renderVendidos();
