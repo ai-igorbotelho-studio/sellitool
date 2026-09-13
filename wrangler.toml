@@ -5,7 +5,7 @@ pages_build_output_dir = "."
 [[d1_databases]]
 binding = "DB"
 database_name = "sellitool"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "8c3548d2-9876-44fd-8fc1-c9a72833e0e5"
 
 [[r2_buckets]]
 binding = "PHOTOS"
