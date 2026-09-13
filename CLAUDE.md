@@ -1,10 +1,10 @@
-# Contexto do projeto — Selling Tool
+# Contexto do projeto — Sellitool
 
 Leia `README.md` primeiro. Este arquivo é só o resumo operacional pro Claude Code.
 
 ## Stack
 
-HTML/CSS/JS puro, um arquivo (`index.html`), sem build, sem framework. Deploy alvo: GitHub + Cloudflare Pages (estático, sem build, output na raiz). Não adicione um bundler, React ou build step sem perguntar antes — a decisão de ficar sem build foi deliberada (Fase 3 do senior-frontend-engineer, ver `docs/skills/senior-frontend-engineer.md`).
+HTML/CSS/JS puro, um arquivo (`index.html`) mais `assets/` (ícones, logo, og-image, manifest), sem build, sem framework. Deploy alvo: GitHub + Cloudflare Pages (estático, sem build, output na raiz). Não adicione um bundler, React ou build step sem perguntar antes — a decisão de ficar sem build foi deliberada (Fase 3 do senior-frontend-engineer, ver `docs/skills/senior-frontend-engineer.md`).
 
 ## Antes de mexer no código
 
@@ -18,6 +18,10 @@ HTML/CSS/JS puro, um arquivo (`index.html`), sem build, sem framework. Deploy al
 - Tokens de cor em `:root` como `--cor-1..4`, `--fundo`, `--tinta`, com tokens derivados (`--ink-soft`, `--line`, `--paper`, etc.) via `color-mix()`. Adicione novos tokens derivados do mesmo jeito em vez de hexadecimais soltos no meio das regras.
 - `--radius` (22px) é só pros cartões de navegação da Home (o elemento "herói" da interface). `--radius-sm` (12px) é pra tudo secundário (fieldset, card de item, stat, reply-card). Não unifique os dois — a diferença é hierarquia intencional, não inconsistência.
 - Sombra (`--shadow-hover`) só aparece em estados (hover do nav-card, aba ativa da tab bar) — nunca estática em todo container. Se for adicionar sombra em algo novo, pergunte-se se é decoração ou resposta a uma ação/estado.
+- Movimento vive em variáveis CSS (`--px`, `--py`, `--sy`, `--mx`, `--my`, `--rx`, `--ry`) escritas pelo JS num único `requestAnimationFrame`; não adicione listeners de scroll/pointer paralelos — alimente as mesmas variáveis.
+- Elementos com `.reveal` entram via `IntersectionObserver` (`revealIn()`); há um fallback de 1,4s que força `.in` pra nunca deixar conteúdo invisível.
+- Todo texto sobre `--tinta` usa `--cor-1` ou `--ink-on-dark-soft`; sobre `--lavender` usa `--ink`. Mint continua só em ícones, barras e anel do gráfico.
+- Ao criar página nova: adicionar `<section class="page" id="page-x">`, uma entrada na tabela `SEO`, um botão no drawer (`data-page="x"`) e no footer.
 - Dados persistem em `localStorage` sob a chave `vv_items_v1`. Ver função `saveItems()`/`loadItems()` no final do `<script>`.
 
 ## Não fazer sem perguntar

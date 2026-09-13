@@ -24,3 +24,17 @@ Fórmula WCAG 2.x, valores reais dos tokens CSS shipados no `index.html`.
 
 - Sem navegador real disponível nesta sessão para captura de tela ou teste de Safari iOS/Android — os números acima são cálculo de fórmula, não renderização visual.
 - Sem teste de `prefers-reduced-motion` — as únicas transições no arquivo são hover/active de 0,1–0,15s, que já são discretas, mas isso não foi confirmado com o media query.
+
+
+## Adendo — interface v2 (header, drawer, footer, hero escuro)
+
+Novos pares usados como texto, medidos pela fórmula WCAG 2.x (luminância relativa):
+
+| Par | Onde | Razão |
+|---|---|---|
+| `#E0F8FF` sobre `#0F1532` | header, drawer, footer, cartão-herói, barra de abas | 16.22:1 |
+| `--ink-on-dark-soft` (`#A6BCCA`, mistura 72% lagoon / 28% tinta) sobre `#0F1532` | subtítulos no footer/herói | 9.9:1 |
+| `#0F1532` sobre `#BBB2FF` | aba ativa, item atual do drawer, `mark` do título, botão secundário | 9.31:1 |
+| `#0F1532` sobre `#FFFFFF` | cartões (`--paper-raised`) | 18.4:1 |
+
+Nenhum texto novo em mint. O anel do dashboard usa mint só como traço (não-texto, ≥3:1 cumprido).

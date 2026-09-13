@@ -1,10 +1,10 @@
-# Selling Tool
+# Sellitool
 
 Ferramenta pessoal do Igor pra listar, acompanhar e fechar vendas de itens e do carro (Ostend, Waiheke Island), com biblioteca de respostas em NZ English pro Trade Me e Facebook Marketplace.
 
 ## O que é
 
-Um único arquivo HTML/CSS/JS, sem build, sem dependência de servidor. Os dados ficam em `localStorage` no navegador. Pensado pra publicar como site estático (GitHub + Cloudflare Pages).
+Um único arquivo HTML/CSS/JS, sem build, sem dependência de servidor, mais a pasta `assets/` (ícone, logo, imagem de compartilhamento e manifest). Os dados ficam em `localStorage` no navegador. Pensado pra publicar como site estático (GitHub + Cloudflare Pages).
 
 ## Rodar localmente
 
@@ -23,6 +23,15 @@ O repositório já está conectado ao Cloudflare Pages.
 - Cada push no branch de produção redeploya automaticamente. Pushes em outros branches geram um preview deploy com URL própria.
 
 `_headers` na raiz define cabeçalhos de segurança e cache pro Cloudflare Pages.
+
+## Interface (v2)
+
+- Header fixo em tinta (`--tinta`) com logo e menu hamburguer que abre um drawer com todas as páginas; footer no mesmo tom.
+- Home com saudação, headline com destaque em lavanda, cartão-herói escuro com total à venda, pílulas de acesso rápido e cartões de etapa com tilt e spotlight ao passar o mouse.
+- Barra de abas flutuante (pílula escura) que se esconde ao rolar pra baixo e mostra o rótulo da aba ativa.
+- Movimento: transição entre páginas, revelação escalonada por `IntersectionObserver`, parallax de fundo por ponteiro/rolagem/giroscópio (escrito em variáveis CSS num único `requestAnimationFrame`). Tudo desliga com `prefers-reduced-motion`.
+- SEO por página: `document.title`, `meta description` e Open Graph mudam a cada navegação (tabela `SEO` no script) e a URL ganha `#pagina`, que também funciona como rota ao abrir.
+- Identidade: `assets/icon.svg` (etiqueta de preço com S, ponto mint), `assets/logo.svg`, PNGs 32/180/192/512, `assets/og-image.png` 1200×630 e `assets/site.webmanifest`.
 
 ## Sistema de design em uso
 

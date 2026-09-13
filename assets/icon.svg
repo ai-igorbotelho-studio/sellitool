@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="116" fill="#0F1532"/>
+  <!-- price tag -->
+  <path d="M292 96h108a20 20 0 0 1 20 20v108a20 20 0 0 1-5.9 14.1L226.1 426.1a20 20 0 0 1-28.2 0L85.9 314.1a20 20 0 0 1 0-28.2L277.9 101.9A20 20 0 0 1 292 96z" fill="#BBB2FF"/>
+  <circle cx="356" cy="156" r="26" fill="#0F1532"/>
+  <!-- S stroke cut through the tag -->
+  <path d="M232 214c-18 0-36 12-36 30 0 38 74 22 74 60 0 20-20 32-40 32" fill="none" stroke="#0F1532" stroke-width="30" stroke-linecap="round"/>
+  <!-- mint dot: the "sold" mark -->
+  <circle cx="124" cy="388" r="22" fill="#378C5E"/>
+</svg>
