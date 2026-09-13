@@ -11,8 +11,7 @@ No terminal, com o Wrangler logado (`npx wrangler login`):
 npx wrangler d1 create sellitool
 ```
 
-Copie o `database_id` que aparece e cole em `wrangler.toml` no lugar de `REPLACE_WITH_YOUR_D1_DATABASE_ID`.
-Depois crie as tabelas:
+(Já feito: o banco existe com id `8c3548d2-9876-44fd-8fc1-c9a72833e0e5`.) Crie as tabelas:
 
 ```
 npx wrangler d1 execute sellitool --remote --file migrations/0001_init.sql
@@ -33,7 +32,7 @@ Dashboard → Workers & Pages → sellitool → Settings → Bindings:
 | D1 database | `DB` | `sellitool` |
 | R2 bucket | `PHOTOS` | `sellitool-photos` |
 
-(Se o projeto ler o `wrangler.toml` do repositório, esses dois já vêm de lá; confira que aparecem.)
+Os bindings são configurados **só pelo painel**. Não há `wrangler.toml` ativo no repositório de propósito: com ele presente, o Pages recusa o deploy inteiro se um recurso (bucket, banco) ainda não existir. `wrangler.example.toml` fica como referência e pra testes locais (copie pra `wrangler.toml` localmente; ele está no `.gitignore`).
 
 ## 4. Senha
 
@@ -61,6 +60,7 @@ Deployments → Retry deployment (ou faça um push). Ao abrir o site, aparece a 
 ## Testar localmente
 
 ```
+cp wrangler.example.toml wrangler.toml
 npx wrangler d1 execute sellitool --local --file migrations/0001_init.sql
 npx wrangler pages dev . --binding SELLITOOL_PASSWORD=teste
 ```
