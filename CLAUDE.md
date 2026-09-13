@@ -23,7 +23,7 @@ HTML/CSS/JS puro, um arquivo (`index.html`) mais `assets/` (ícones, logo, og-im
 - Todo texto sobre `--tinta` usa `--cor-1` ou `--ink-on-dark-soft`; sobre `--lavender` usa `--ink`. Mint continua só em ícones, barras e anel do gráfico.
 - Ao criar página nova: adicionar `<section class="page" id="page-x">`, uma entrada na tabela `SEO`, um botão no drawer (`data-page="x"`) e no footer.
 - Persistência: `backend.mode` é `local`, `locked` (nuvem configurada, sem sessão) ou `cloud`. `saveItems(item, event)` grava localStorage sempre e, em `cloud`, faz `PUT /api/items/:id` com o evento. Toda mudança de status deve passar um evento (tipos válidos em `functions/api/events.js`).
-- Backend em `functions/` (Pages Functions, ES modules, sem build): `_lib.js` (sessão HMAC, helpers), `api/_middleware.js` (exige sessão em tudo menos login/logout/status), `api/items`, `api/events`, `api/photos`. Schema em `migrations/`. Passo a passo em `docs/deploy-cloudflare.md`.
+- Backend em `functions/` (Pages Functions, ES modules, sem build): `_lib.js` (sessão HMAC, helpers), `api/_middleware.js` (exige sessão em tudo menos login/logout/status), `api/items`, `api/events`, `api/photos` (upload, leitura, `import` por link), `api/scrape` (busca + extração + refinamento opcional por Claude via HTTP puro, sem SDK porque não há bundler). Schema em `migrations/`. Passo a passo em `docs/deploy-cloudflare.md`.
 - Chave do localStorage continua `vv_items_v1`; o JSON do item no D1 é o mesmo objeto.
 
 ## Não fazer sem perguntar

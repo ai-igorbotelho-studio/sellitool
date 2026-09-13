@@ -542,16 +542,19 @@
         <div class="actions" style="margin-top:8px;">
           <button class="btn btn-secondary btn-small" type="button" onclick="importarDeURL()">Tentar buscar automaticamente</button>
         </div>
-        <p class="hint" id="import-status">Vários sites bloqueiam esse tipo de busca automática — se não funcionar, use o campo abaixo.</p>
+        <p class="hint" id="import-status">Com a nuvem ligada, a busca é feita pelo servidor e as características vêm organizadas em bullets. Se o site bloquear, cole o texto abaixo.</p>
 
         <label style="margin-top:14px;">Ou cole aqui o texto do anúncio (caminho mais confiável)</label>
         <textarea id="f-import-texto" placeholder="Cole o texto copiado do site aqui..."></textarea>
 
+        <div id="import-found"></div>
+
         <label>Link de uma imagem (opcional)</label>
         <div class="row">
-          <input type="text" id="f-import-imagem-url" placeholder="https://.../foto.jpg" style="flex:1;">
+          <input type="text" id="f-import-imagem-url" placeholder="https://.../foto.jpg" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarImagemPorLink();}">
           <button class="btn btn-secondary btn-small" type="button" style="flex:0;white-space:nowrap;" onclick="adicionarImagemPorLink()">Adicionar imagem</button>
         </div>
+        <p class="hint" id="img-status">A imagem aparece na seção "Fotos" abaixo.</p>
 
         <div class="actions" style="margin-top:12px;">
           <button class="btn btn-primary btn-small" type="button" onclick="sugerirPreenchimento()">Sugerir preenchimento a partir do texto acima</button>
@@ -1071,17 +1074,61 @@ function stripHtml(html){
 async function importarDeURL(){
   const url = document.getElementById('f-import-url').value.trim();
   const status = document.getElementById('import-status');
+  const found = document.getElementById('import-found');
   if(!url){ status.textContent = 'Cole um link primeiro.'; return; }
-  status.textContent = 'Buscando...';
+  status.textContent = 'Buscando e organizando...';
+  found.innerHTML = '';
+  /* nuvem: o servidor busca a página (sem bloqueio de CORS) e organiza em bullets */
+  if(backend.mode==='cloud'){
+    try{
+      const r = await api('/scrape', { method:'POST', body: JSON.stringify({ url }) });
+      aplicarImportado(r);
+      const n = r.bullets.length;
+      status.textContent = `${n} característica${n===1?'':'s'} extraída${n===1?'':'s'} de ${r.fonte}${r.ia ? ' (organizado por IA)' : ''}. Revise os campos abaixo.`;
+      logEvent(document.getElementById('f-id').value || 'novo', 'nota', { importadoDe: r.fonte }).catch?.(()=>{});
+      return;
+    }catch(err){
+      if(err.message==='unauthorized') return;
+      status.textContent = 'O site não deixou buscar (' + err.message + '). Cole o texto do anúncio no campo abaixo.';
+      return;
+    }
+  }
+  /* modo local: tentativa direta, quase sempre bloqueada por CORS */
   try{
     const res = await fetch(url, {mode:'cors'});
     if(!res.ok) throw new Error('HTTP '+res.status);
-    const html = await res.text();
-    const texto = stripHtml(html);
+    const texto = stripHtml(await res.text());
     document.getElementById('f-import-texto').value = texto.slice(0,4000);
     status.textContent = 'Importado! Revise o texto abaixo e clique em "Sugerir preenchimento".';
   }catch(err){
-    status.textContent = 'Não consegui buscar automaticamente (o site provavelmente bloqueia isso, é comum no Trade Me e Facebook). Cole o texto manualmente no campo abaixo.';
+    status.textContent = 'Não consegui buscar automaticamente (sem a nuvem configurada, o navegador é bloqueado pelo site). Cole o texto manualmente no campo abaixo.';
+  }
+}
+
+/* preenche o formulário com o resultado do /api/scrape, sem sobrescrever o que já foi digitado */
+function aplicarImportado(r){
+  const set = (id, v) => { const el = document.getElementById(id); if(el && v && !el.value) el.value = v; };
+  set('f-nome', r.nome);
+  if(r.preco) set('f-preco-ideal', r.preco);
+  if(r.condicao) document.getElementById('f-condicao').value = r.condicao;
+  const bullets = (r.bullets||[]).map(b => '• ' + b).join('\n');
+  const desc = [r.marca ? 'Marca: ' + r.marca : '', bullets, r.descricao ? '\n' + r.descricao : ''].filter(Boolean).join('\n');
+  document.getElementById('f-import-texto').value = desc;
+  set('f-descricao', bullets);
+  if(/carro|vehicle|toyota|honda|mazda|nissan|ford|km\b/i.test((r.nome||'') + ' ' + bullets) && (r.bullets||[]).some(b=>/odometer|odômetro|transmiss|km\b/i.test(b))){
+    document.getElementById('f-categoria').value = 'carro'; toggleCarFields();
+  }
+  const found = document.getElementById('import-found');
+  if(r.imagens && r.imagens.length){
+    found.innerHTML = '<div class="hint" style="margin:10px 0 6px">Imagens encontradas na página (toque pra adicionar):</div><div class="thumbs"></div>';
+    const box = found.querySelector('.thumbs');
+    r.imagens.forEach(u=>{
+      const img = document.createElement('img'); img.src = u; img.alt = ''; img.loading = 'lazy'; img.title = 'Adicionar esta imagem';
+      img.style.cursor = 'pointer';
+      img.onerror = ()=> img.remove();
+      img.onclick = ()=>{ document.getElementById('f-import-imagem-url').value = u; adicionarImagemPorLink(); img.style.opacity='.35'; img.onclick=null; };
+      box.appendChild(img);
+    });
   }
 }
 
@@ -1114,15 +1161,26 @@ function sugerirPreenchimento(){
   alert('Sugestão aplicada. Revise os campos antes de gerar a copy final.');
 }
 
-function adicionarImagemPorLink(){
-  const url = document.getElementById('f-import-imagem-url').value.trim();
-  if(!url) return;
-  currentImages.push(url);
+async function adicionarImagemPorLink(){
+  const input = document.getElementById('f-import-imagem-url');
+  const status = document.getElementById('img-status');
+  const url = input.value.trim();
+  if(!url){ status.textContent = 'Cole o link de uma imagem primeiro.'; return; }
+  if(!/^https?:\/\//i.test(url)){ status.textContent = 'O link precisa começar com http:// ou https://'; return; }
+  if(currentImages.length >= 5){ status.textContent = 'Máximo de 5 fotos por item.'; return; }
   const preview = document.getElementById('thumbs-preview');
-  const img = document.createElement('img');
-  img.src = url;
+  const img = document.createElement('img'); img.alt = ''; img.style.opacity = '.4';
   preview.appendChild(img);
-  document.getElementById('f-import-imagem-url').value='';
+  status.textContent = 'Adicionando...';
+  let finalUrl = url;
+  if(backend.mode==='cloud' && backend.photos){
+    /* o servidor baixa a imagem (sem bloqueio de hotlink) e guarda no R2 */
+    try{ finalUrl = (await api('/photos/import', { method:'POST', body: JSON.stringify({ url }) })).url; }
+    catch(e){ if(e.message==='unauthorized'){ img.remove(); return; } /* segue com o link externo */ }
+  }
+  img.onload = ()=>{ img.style.opacity = '1'; currentImages.push(finalUrl); input.value = ''; status.textContent = finalUrl===url ? 'Imagem adicionada (link externo; pode sumir se o site remover).' : 'Imagem salva na nuvem.'; };
+  img.onerror = ()=>{ img.remove(); status.textContent = 'Não consegui carregar essa imagem. Confira se o link abre a imagem direto (termina em .jpg, .png...) ou baixe e envie pelo campo "Fotos".'; };
+  img.src = finalUrl;
 }
 
 function gerarCopy(){

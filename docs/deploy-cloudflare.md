@@ -39,6 +39,10 @@ Dashboard → Workers & Pages → sellitool → Settings → Bindings:
 
 Settings → Environment variables → **Add** → `SELLITOOL_PASSWORD` → marque **Encrypt**. Use uma senha longa. Salve para Production (e Preview, se quiser testar em previews).
 
+## 4b. Organização por IA (opcional)
+
+Settings → Environment variables → `ANTHROPIC_API_KEY` (Encrypt). Com a chave, o botão "Tentar buscar automaticamente" manda o conteúdo da página pro Claude (`claude-opus-5`, saída em JSON com schema) e recebe nome, preço, condição e características em bullets limpos, em português. Sem a chave, o servidor ainda extrai por heurística (JSON-LD, tabelas de specs, listas, meta tags), que já cobre a maior parte das lojas e do Trade Me.
+
 ## 5. Redeploy
 
 Deployments → Retry deployment (ou faça um push). Ao abrir o site, aparece a tela de senha. No primeiro login, os items que estavam só no navegador sobem automaticamente pro D1.
@@ -49,6 +53,8 @@ Deployments → Retry deployment (ou faça um push). Ao abrir o site, aparece a 
 - Sessão: cookie HttpOnly assinado (HMAC-SHA256 com a própria senha como segredo), 30 dias.
 - `items`: um registro por item, JSON completo em `data` (mesmo formato do localStorage).
 - `events`: linha do tempo por item (criado, publicado, mensagem, visita, oferta, vendido...). Alimenta "Atividade recente" no dashboard e as fases 3 e 4.
+- `POST /api/scrape { url }`: busca a página no servidor (sem CORS), extrai com `HTMLRewriter`, organiza em bullets e devolve também as imagens encontradas.
+- `POST /api/photos/import { url }`: baixa uma imagem por link no servidor (sem bloqueio de hotlink) e guarda no R2.
 - Fotos: sobem pro R2 redimensionadas a 1600px; o item guarda só a URL `/api/photos/<key>`. As fotos são privadas (passam pela sessão).
 - localStorage continua como cache: se a nuvem falhar, o app avisa e guarda localmente.
 
