@@ -347,6 +347,22 @@
   /* ---------- site header + drawer + footer (ink ground) ---------- */
   .site-header{position:sticky;top:0;z-index:25;background:color-mix(in srgb,var(--tinta) 94%, transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:var(--cor-1);}
   .site-header .in{max-width:820px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .site-header .in .brand{margin-right:auto;}
+  .sync{width:10px;height:10px;border-radius:50%;background:var(--line-strong);box-shadow:0 0 0 3px color-mix(in srgb,var(--cor-1) 12%, transparent);}
+  .sync[data-state="ok"]{background:var(--teal);}
+  .sync[data-state="err"]{background:var(--lavender);}
+  .linkbtn{background:none;border:0;color:var(--cor-1);font-family:var(--fonte-1);font-size:12px;text-decoration:underline;cursor:pointer;padding:0;margin-left:8px;}
+  .login{position:fixed;inset:0;z-index:40;background:color-mix(in srgb,var(--tinta) 70%, transparent);backdrop-filter:blur(10px);display:grid;place-items:center;padding:20px;}
+  .login[hidden]{display:none;}
+  .login-card{background:var(--paper-raised);border-radius:var(--radius);padding:28px 24px;width:min(420px,100%);box-shadow:var(--shadow-float);animation:pageIn .4s var(--ease-out) both;}
+  .login-card img{border-radius:16px;margin-bottom:12px;}
+  .login-card h2{font-size:22px;margin-bottom:6px;}
+  .login-card p{margin:0 0 14px;font-size:14px;color:var(--ink-soft);}
+  .feed{display:grid;gap:6px;margin-top:8px;}
+  .feed-row{display:grid;grid-template-columns:auto auto 1fr;gap:10px;align-items:center;background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 12px;font-size:13px;}
+  .feed-row .when{font-size:11px;color:var(--ink-soft);white-space:nowrap;}
+  .feed-row .what{font-family:var(--fonte-1);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  @media (max-width:480px){.feed-row{grid-template-columns:auto 1fr;}.feed-row .what{grid-column:1 / -1;}}
   .brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;cursor:pointer;color:inherit;font-family:var(--fonte-1);font-size:20px;letter-spacing:-.02em;}
   .brand img{width:34px;height:34px;border-radius:9px;}
   .brand b{font-weight:600;}
@@ -400,6 +416,7 @@
 <header class="site-header">
   <div class="in">
     <button class="brand" onclick="goto_('home')" aria-label="Sellitool, ir para a Home"><img src="assets/icon.svg" alt=""><span>selli<b>tool</b></span></button>
+    <span class="sync" id="sync" data-state="local" title="Modo local" aria-hidden="true"></span>
     <button class="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="drawer" onclick="toggleMenu()"><i></i></button>
   </div>
 </header>
@@ -417,7 +434,7 @@
       <button data-page="biblioteca" style="--d:0.33s" onclick="goto_('biblioteca')"><svg viewBox="0 0 24 24"><path d="M4 5h16v10H8l-4 4V5z"/></svg><span>Biblioteca de respostas</span></button>
       <button data-page="ferramentas" style="--d:0.37s" onclick="goto_('ferramentas')"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17l1 1 5.3-5.3a4 4 0 0 1 5.4-5.4l-2 2 1.7 1.7 2-2z"/></svg><span>Ferramentas & automação</span></button>
   </nav>
-  <div class="df">Sellitool · dados salvos neste navegador</div>
+  <div class="df"><span id="df-mode">Sellitool</span> <button class="linkbtn" id="btn-sair" hidden onclick="sair()">Sair</button></div>
 </aside>
 
 <main>
@@ -685,6 +702,8 @@
     <div class="ring-card reveal" id="ring-card" style="--d:.14s"></div>
     <h2>Por canal</h2>
     <div id="bars-canal"></div>
+    <div class="section-head" id="feed-head" hidden><h2>Atividade recente</h2><span class="hint">últimos eventos</span></div>
+    <div class="feed" id="feed"></div>
   </section>
 
   <!-- BIBLIOTECA -->
@@ -708,7 +727,7 @@
 
     <fieldset>
       <legend>Backup e planilha (Google Sheets)</legend>
-      <p style="font-size:14px;">Os dados ficam salvos neste navegador. Pra ter backup ou levar pra uma planilha do Google, exporte em CSV e importe no Sheets (Arquivo → Importar).</p>
+      <p style="font-size:14px;">Com a nuvem configurada, os dados ficam no Cloudflare D1 e aparecem em qualquer aparelho; sem ela, ficam só neste navegador. Pra ter backup ou levar pra uma planilha do Google, exporte em CSV e importe no Sheets (Arquivo → Importar).</p>
       <div class="actions">
         <button class="btn btn-primary btn-small" onclick="exportarCSV()">Exportar CSV</button>
         <label class="btn btn-secondary btn-small" style="cursor:pointer;">
@@ -756,6 +775,21 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<div class="login" id="login" hidden>
+  <form class="login-card" onsubmit="fazerLogin(event)">
+    <img src="assets/icon.svg" alt="" width="56" height="56">
+    <h2>Entrar no Sellitool</h2>
+    <p>Seus items ficam salvos na nuvem (Cloudflare D1) e aparecem em qualquer aparelho.</p>
+    <label for="login-pass">Senha</label>
+    <input type="password" id="login-pass" autocomplete="current-password" required>
+    <p class="hint" id="login-msg"></p>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Entrar</button>
+      <button class="btn btn-ghost" type="button" onclick="usarLocal()">Usar só neste navegador</button>
+    </div>
+  </form>
+</div>
+
 <nav class="tabbar" id="tabbar">
   <button id="tab-home" onclick="goto_('home')" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M4 11.5L12 4l8 7.5M6 10v9h12v-9"/></svg><span>Home</span></button>
   <button id="tab-listar" onclick="goto_('listar')" aria-label="Listar um item"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Listar</span></button>
@@ -769,17 +803,93 @@
 const STORAGE_KEY = 'vv_items_v1';
 let items = [];
 let currentImages = [];
+/* modo: 'local' (só localStorage) | 'cloud' (D1 via /api, localStorage como cache) */
+const backend = { mode: 'local', configured: false, photos: false, authed: false };
+const api = async (path, opts = {}) => {
+  const r = await fetch('/api' + path, { credentials: 'same-origin', headers: { 'content-type': 'application/json', ...(opts.headers||{}) }, ...opts });
+  if (r.status === 401) { backend.authed = false; showLogin(); throw new Error('unauthorized'); }
+  if (!r.ok) throw new Error((await r.json().catch(()=>({}))).error || ('HTTP ' + r.status));
+  return r.status === 204 ? null : r.json();
+};
 
-function loadItems(){
+function loadLocal(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
+}
+function saveLocal(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); }catch(e){ /* quota: fotos grandes em modo local */ } }
+
+async function detectBackend(){
+  if(location.protocol === 'file:') return;
   try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    items = raw ? JSON.parse(raw) : [];
-  }catch(e){ items = []; }
+    const st = await (await fetch('/api/status', { credentials: 'same-origin' })).json();
+    Object.assign(backend, st);
+    if(st.configured) backend.mode = st.authed ? 'cloud' : 'locked';
+  }catch(e){ /* sem Functions (ex.: preview estático) → segue local */ }
 }
-function saveItems(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+
+async function loadItems(){
+  items = loadLocal();
+  if(backend.mode !== 'cloud') return;
+  try{
+    const remote = await api('/items');
+    const local = items;
+    /* migração única: o que só existe no navegador sobe pro D1 (sem sobrescrever) */
+    const missing = local.filter(l => !remote.some(r => r.id === l.id));
+    if(missing.length){ await api('/items', { method:'POST', body: JSON.stringify(missing) }); toast(`${missing.length} item(ns) migrados pra nuvem`); }
+    items = missing.length ? [...remote, ...missing] : remote;
+    saveLocal();
+  }catch(e){ if(e.message!=='unauthorized') toast('Sem conexão: usando dados locais'); }
+}
+
+/* saveItems(item?, event?) — persiste tudo local e, em modo cloud, o item alterado no D1 com evento opcional */
+let syncTimer;
+async function saveItems(changed, event){
+  saveLocal();
   renderAll();
+  if(backend.mode !== 'cloud') return;
+  try{
+    if(changed){
+      await api('/items/' + encodeURIComponent(changed.id), { method:'PUT', body: JSON.stringify({ item: changed, event }) });
+    }
+    setSync('ok');
+  }catch(e){ if(e.message!=='unauthorized'){ setSync('err'); toast('Falha ao salvar na nuvem, guardei localmente'); } }
 }
+async function deleteRemote(id){
+  if(backend.mode !== 'cloud') return;
+  try{ await api('/items/' + encodeURIComponent(id), { method:'DELETE' }); }catch(e){}
+}
+async function logEvent(itemId, type, meta){
+  if(backend.mode !== 'cloud') return;
+  try{ await api('/events', { method:'POST', body: JSON.stringify({ itemId, type, meta }) }); }catch(e){}
+}
+function setSync(state){
+  const el = document.getElementById('sync'); if(!el) return;
+  el.dataset.state = state;
+  el.title = state==='ok' ? 'Sincronizado com a nuvem' : state==='err' ? 'Erro ao sincronizar' : 'Modo local';
+}
+
+/* ---------- login ---------- */
+function showLogin(){
+  document.getElementById('login').hidden = false;
+  document.getElementById('login-pass').focus();
+}
+async function fazerLogin(ev){
+  ev.preventDefault();
+  const pass = document.getElementById('login-pass').value;
+  const msg = document.getElementById('login-msg');
+  msg.textContent = 'Entrando...';
+  try{
+    await api('/login', { method:'POST', body: JSON.stringify({ password: pass }) });
+    backend.authed = true; backend.mode = 'cloud';
+    document.getElementById('login').hidden = true;
+    document.getElementById('login-pass').value = '';
+    msg.textContent = '';
+    await loadItems(); renderAll(); setSync('ok');
+    toast('Conectado à nuvem');
+  }catch(e){ msg.textContent = e.message==='wrong_password' ? 'Senha incorreta.' : 'Não foi possível entrar: ' + e.message; }
+}
+function usarLocal(){ document.getElementById('login').hidden = true; backend.mode = 'local'; setSync('local'); }
+async function sair(){ try{ await api('/logout', { method:'POST' }); }catch(e){} backend.mode='locked'; backend.authed=false; showLogin(); }
+
 function uid(){
   return 'it_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
 }
@@ -913,18 +1023,36 @@ function handleImages(event){
     const reader = new FileReader();
     reader.onload = e=>{
       const img = new Image();
-      img.onload = ()=>{
+      img.onload = async ()=>{
+        /* na nuvem (R2) sobe até 1600px; local (localStorage) fica em 480px pra não estourar a cota */
+        const cloud = backend.mode==='cloud' && backend.photos;
         const canvas = document.createElement('canvas');
-        const maxW = 480;
+        const maxW = cloud ? 1600 : 480;
         const scale = Math.min(1, maxW/img.width);
-        canvas.width = img.width*scale;
-        canvas.height = img.height*scale;
+        canvas.width = Math.round(img.width*scale);
+        canvas.height = Math.round(img.height*scale);
         canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg',0.75);
-        currentImages.push(dataUrl);
         const thumb = document.createElement('img');
-        thumb.src = dataUrl;
+        thumb.src = canvas.toDataURL('image/jpeg',0.6);
+        thumb.style.opacity = cloud ? '.4' : '1';
         preview.appendChild(thumb);
+        if(cloud){
+          canvas.toBlob(async blob=>{
+            try{
+              const fd = new FormData(); fd.append('file', blob, 'foto.jpg');
+              const r = await fetch('/api/photos', { method:'POST', body: fd, credentials:'same-origin' });
+              if(!r.ok) throw new Error('upload');
+              const { url } = await r.json();
+              currentImages.push(url); thumb.src = url; thumb.style.opacity = '1';
+            }catch(err){
+              const dataUrl = canvas.toDataURL('image/jpeg',0.6);
+              currentImages.push(dataUrl); thumb.style.opacity = '1';
+              toast('Foto guardada localmente (upload falhou)');
+            }
+          }, 'image/jpeg', 0.82);
+        }else{
+          currentImages.push(canvas.toDataURL('image/jpeg',0.75));
+        }
       };
       img.src = e.target.result;
     };
@@ -1087,7 +1215,12 @@ function salvarItem(status){
 
   const idx = items.findIndex(i=>i.id===id);
   if(idx>=0) items[idx]=item; else items.push(item);
-  saveItems();
+  const ev = !existing ? { type:'criado', meta:{ status } }
+           : status==='aguardando_aprovacao' && existing.status!=='aguardando_aprovacao' ? { type:'enviado_aprovacao' }
+           : (existing.precoIdeal!==item.precoIdeal || existing.precoMin!==item.precoMin) ? { type:'preco', meta:{ de:existing.precoIdeal, para:item.precoIdeal } }
+           : { type:'editado' };
+  saveItems(item, ev);
+  toast(status==='rascunho' ? 'Rascunho salvo' : 'Enviado para aprovação');
   goto_('home');
 }
 
@@ -1129,7 +1262,7 @@ function aprovar(id){
   if(!item) return;
   item.status='a_venda';
   item.publicadoEm = Date.now();
-  saveItems();
+  saveItems(item, { type:'publicado', meta:{ canais:item.canais } });
 }
 function reprovar(id){
   const motivo = prompt('Motivo de não vender este item:','');
@@ -1137,7 +1270,7 @@ function reprovar(id){
   const item = items.find(i=>i.id===id);
   item.status='nao_vender';
   item.naoVenderMotivo = motivo;
-  saveItems();
+  saveItems(item, { type:'reprovado', meta:{ motivo } });
 }
 function marcarVendido(id){
   const precoStr = prompt('Preço de venda (NZ$):', items.find(i=>i.id===id).precoIdeal);
@@ -1146,7 +1279,7 @@ function marcarVendido(id){
   const item = items.find(i=>i.id===id);
   item.status='vendido';
   item.vendido = { preco:Number(precoStr)||0, data:Date.now(), canal:canal||'' };
-  saveItems();
+  saveItems(item, { type:'vendido', meta:item.vendido });
 }
 function naoVenderMais(id){
   const motivo = prompt('Motivo de não vender mais este item:','');
@@ -1154,16 +1287,18 @@ function naoVenderMais(id){
   const item = items.find(i=>i.id===id);
   item.status='nao_vender';
   item.naoVenderMotivo = motivo;
-  saveItems();
+  saveItems(item, { type:'retirado', meta:{ motivo } });
 }
 function atualizarAcao(id, valor){
   const item = items.find(i=>i.id===id);
   item.acaoNecessaria = valor;
-  saveItems();
+  const map = { 'Responder mensagem':'mensagem', 'Agendar retirada':'visita' };
+  saveItems(item, { type: map[valor] || 'acao', meta:{ acao: valor } });
 }
 function excluirItem(id){
   if(!confirm('Excluir este item permanentemente?')) return;
   items = items.filter(i=>i.id!==id);
+  deleteRemote(id);
   saveItems();
 }
 
@@ -1321,6 +1456,21 @@ function renderDashboard(){
     </div>`).join('') : '<div class="empty">Ainda sem items associados a canais.</div>';
 }
 
+const EVENT_LABEL = { criado:'Criado', enviado_aprovacao:'Enviado pra aprovação', publicado:'Publicado', reprovado:'Reprovado', mensagem:'Mensagem recebida', visita:'Visita marcada', oferta:'Oferta', vendido:'Vendido', retirado:'Retirado', acao:'Ação atualizada', preco:'Preço alterado', editado:'Editado', excluido:'Excluído', importado:'Importado', nota:'Nota' };
+async function renderFeed(){
+  const head = document.getElementById('feed-head'), el = document.getElementById('feed');
+  if(backend.mode !== 'cloud'){ head.hidden = true; el.innerHTML=''; return; }
+  try{
+    const evs = await api('/events?limit=30');
+    head.hidden = !evs.length;
+    el.innerHTML = evs.map(e=>{
+      const it = items.find(i=>i.id===e.item_id);
+      const d = new Date(e.created_at);
+      const extra = e.meta && (e.meta.preco ? `$${e.meta.preco}` : e.meta.acao || e.meta.motivo || (e.meta.para!=null ? `$${e.meta.de} → $${e.meta.para}` : ''));
+      return `<div class="feed-row"><span class="mono when">${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} ${d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span><span class="badge badge-gray">${EVENT_LABEL[e.type]||e.type}</span><span class="what">${it ? it.nome : '(item removido)'}${extra ? ` <span class="mono" style="color:var(--ink-soft)">· ${extra}</span>` : ''}</span></div>`;
+    }).join('');
+  }catch(e){ head.hidden = true; }
+}
 function renderCounts(){
   const n = st => items.filter(i=>i.status===st).length;
   const setAll = (ids,val) => ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent = val; });
@@ -1343,6 +1493,7 @@ function renderAll(){
   renderVendidos();
   renderNaoVender();
   renderDashboard();
+  renderFeed();
 }
 
 /* ---------- CSV ---------- */
@@ -1430,12 +1581,19 @@ function copiarTexto(id){
 }
 
 /* ---------- init ---------- */
-loadItems();
-renderAll();
-renderBiblioteca();
-toggleCarFields();
-document.getElementById('ano').textContent = new Date().getFullYear();
-goto_(document.getElementById('page-'+location.hash.slice(1)) ? location.hash.slice(1) : 'home');
+(async function init(){
+  await detectBackend();
+  await loadItems();
+  renderAll();
+  renderBiblioteca();
+  toggleCarFields();
+  document.getElementById('ano').textContent = new Date().getFullYear();
+  setSync(backend.mode==='cloud' ? 'ok' : 'local');
+  document.getElementById('df-mode').textContent = backend.mode==='cloud' ? 'Sellitool · nuvem' : 'Sellitool · dados neste navegador';
+  document.getElementById('btn-sair').hidden = backend.mode!=='cloud';
+  goto_(document.getElementById('page-'+location.hash.slice(1)) ? location.hash.slice(1) : 'home');
+  if(backend.mode==='locked') showLogin();
+})();
 window.addEventListener('hashchange', ()=>{ const n=location.hash.slice(1)||'home'; if(document.getElementById('page-'+n) && !document.getElementById('page-'+n).classList.contains('active')) goto_(n); });
 </script>
 </body>

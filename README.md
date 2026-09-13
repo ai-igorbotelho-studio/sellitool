@@ -41,9 +41,13 @@ Paleta e tipografia vêm de `docs/design-system/current-palette-direct-reading.m
 - Tipo: Jost (headline), IBM Plex Serif (texto/corpo), IBM Plex Mono (dados/números).
 - Ver `docs/contrast-audit.md` pros números reais de contraste WCAG por trás dessas escolhas.
 
+## Nuvem (Fase 1)
+
+Com D1, R2 e a senha configurados no Cloudflare (ver `docs/deploy-cloudflare.md`), os dados ficam na nuvem e sincronizam entre aparelhos, as fotos vão pro R2 e cada mudança de status gera um evento na linha do tempo. Sem essa configuração, o app roda em modo local.
+
 ## Limitações conhecidas (não é bug, é decisão registrada)
 
-- **Dados são por navegador.** `localStorage` não sincroniza entre dispositivos. Exportar/Importar CSV (na tela "Ferramentas") é o backup manual hoje.
+- **Sem a nuvem configurada, dados são por navegador.** Exportar/Importar CSV (na tela "Ferramentas") é o backup manual nesse modo.
 - **Sync automático com Google Sheets não está implementado** — exigiria OAuth ou um Google Apps Script publicado pelo próprio Igor. Não é feito por segurança (nenhuma credencial é digitada em nome do usuário).
 - **Sem posting automático no Trade Me/Facebook.** Não existe API pública legítima pra isso; o caminho real é usar o Claude in Chrome como "braço" pra publicar e responder, com esta ferramenta como o "cérebro" central.
 

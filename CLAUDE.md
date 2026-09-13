@@ -22,10 +22,13 @@ HTML/CSS/JS puro, um arquivo (`index.html`) mais `assets/` (ícones, logo, og-im
 - Elementos com `.reveal` entram via `IntersectionObserver` (`revealIn()`); há um fallback de 1,4s que força `.in` pra nunca deixar conteúdo invisível.
 - Todo texto sobre `--tinta` usa `--cor-1` ou `--ink-on-dark-soft`; sobre `--lavender` usa `--ink`. Mint continua só em ícones, barras e anel do gráfico.
 - Ao criar página nova: adicionar `<section class="page" id="page-x">`, uma entrada na tabela `SEO`, um botão no drawer (`data-page="x"`) e no footer.
-- Dados persistem em `localStorage` sob a chave `vv_items_v1`. Ver função `saveItems()`/`loadItems()` no final do `<script>`.
+- Persistência: `backend.mode` é `local`, `locked` (nuvem configurada, sem sessão) ou `cloud`. `saveItems(item, event)` grava localStorage sempre e, em `cloud`, faz `PUT /api/items/:id` com o evento. Toda mudança de status deve passar um evento (tipos válidos em `functions/api/events.js`).
+- Backend em `functions/` (Pages Functions, ES modules, sem build): `_lib.js` (sessão HMAC, helpers), `api/_middleware.js` (exige sessão em tudo menos login/logout/status), `api/items`, `api/events`, `api/photos`. Schema em `migrations/`. Passo a passo em `docs/deploy-cloudflare.md`.
+- Chave do localStorage continua `vv_items_v1`; o JSON do item no D1 é o mesmo objeto.
 
 ## Não fazer sem perguntar
 
 - Publicar ou dar deploy em produção.
 - Adicionar OAuth/Google Sheets sync com credenciais embutidas no código.
+- Mudar o formato do cookie de sessão ou afrouxar o middleware de `/api/*`.
 - Trocar a stack (framework, bundler) sem antes confirmar com o Igor — ver Fase 1 do senior-frontend-engineer.
